@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Enhanced AI ChatBot - Multi-Capability Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+  :root{
+    --bg:#0b0c10;
+    --card:#14161a;
+    --border:#23262d;
+    --input:#0f1115;
+    --text:#eaf0f1;
+    --muted:#9aa3ad;
+    --accent:#3b82f6;
+    --success:#10b981;
+    --warning:#f59e0b;
+    --error:#ef4444;
+    --radius:12px;
+    --radius-lg:16px;
+    --gap:14px;
+    --shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+
+  *{ box-sizing:border-box; }
+  html, body{ height:100%; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+
+  .wrap{ max-width:1200px; margin:20px auto; padding:0 16px; }
+  .card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; box-shadow:var(--shadow); margin-bottom:20px; }
+
+  h1{ margin:0 0 16px; font-size:24px; font-weight:600; }
+  h2{ margin:0 0 12px; font-size:18px; font-weight:600; }
+  h3{ margin:0 0 8px; font-size:16px; font-weight:600; }
+  
+  label{ display:block; margin:0 0 6px; font-size:13px; color:#aab2bd; }
+
+  input[type="text"], textarea, select{
+    width:100%;
+    padding:12px 14px;
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    background:var(--input);
+    color:var(--text);
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+    font-size:14px;
+    line-height:1.4;
+  }
+  
+  input[type="file"]{
+    width:100%;
+    padding:8px;
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    background:var(--input);
+    color:var(--text);
+    font-size:14px;
+  }
+
+  input::placeholder, textarea::placeholder{ color:#8b96a3; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+
+  textarea{ min-height:100px; resize:vertical; font-family:inherit; }
+
+  .grid{ display:grid; gap:var(--gap); }
+  .grid-2{ grid-template-columns:1fr 1fr; }
+  .grid-3{ grid-template-columns:1fr 1fr 1fr; }
+  
+  @media (max-width:768px){
+    .grid-2, .grid-3{ grid-template-columns:1fr; }
+  }
+
+  button{
+    padding:10px 16px;
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    background:#1a1f27;
+    color:var(--text);
+    cursor:pointer;
+    transition:all .15s ease;
+    font-size:13px;
+    font-weight:500;
+  }
+  
+  button:hover:not(:disabled){ 
+    transform:translateY(-1px); 
+    background:#242830;
+    border-color:var(--accent);
+  }
+  
+  button:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+    transform:none;
+  }
+
+  .btn-primary{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:white;
+  }
+  .btn-primary:hover:not(:disabled){
+    background:#2563eb;
+    border-color:#2563eb;
+  }
+
+  .btn-success{
+    background:var(--success);
+    border-color:var(--success);
+    color:white;
+  }
+
+  .btn-warning{
+    background:var(--warning);
+    border-color:var(--warning);
+    color:black;
+  }
+
+  .btn-danger{
+    background:var(--error);
+    border-color:var(--error);
+    color:white;
+  }
+
+  .btns{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+
+  .output{
+    white-space:pre-wrap;
+    background:var(--input);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px;
+    min-height:120px;
+    line-height:1.5;
+    font-size:14px;
+    word-wrap:break-word;
+    max-height:400px;
+    overflow-y:auto;
+  }
+
+  .chat-history{
+    max-height:500px;
+    overflow-y:auto;
+    background:var(--input);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px;
+  }
+
+  .message{
+    margin-bottom:16px;
+    padding:12px;
+    border-radius:var(--radius);
+    border-left:4px solid var(--border);
+  }
+
+  .message.user{
+    background:rgba(59, 130, 246, 0.1);
+    border-left-color:var(--accent);
+  }
+
+  .message.assistant{
+    background:rgba(16, 185, 129, 0.1);
+    border-left-color:var(--success);
+  }
+
+  .message-header{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+
+  .tabs{
+    display:flex;
+    border-bottom:1px solid var(--border);
+    margin-bottom:20px;
+  }
+
+  .tab{
+    padding:12px 20px;
+    background:transparent;
+    border:none;
+    border-bottom:2px solid transparent;
+    color:var(--muted);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+
+  .tab.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+  }
+
+  .tab:hover{
+    color:var(--text);
+    background:rgba(255,255,255,0.05);
+  }
+
+  .tab-content{
+    display:none;
+  }
+
+  .tab-content.active{
+    display:block;
+  }
+
+  .status{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:500;
+  }
+
+  .status.ready{ background:var(--success); color:white; }
+  .status.thinking{ background:var(--warning); color:black; animation:pulse 1.5s infinite; }
+  .status.error{ background:var(--error); color:white; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+
+  .task-item{
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:12px;
+    margin-bottom:10px;
+  }
+
+  .task-title{
+    font-weight:600;
+    margin-bottom:4px;
+  }
+
+  .task-meta{
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .priority-high{ color:var(--error); }
+  .priority-medium{ color:var(--warning); }
+  .priority-low{ color:var(--success); }
+
+  .upload-area{
+    border:2px dashed var(--border);
+    border-radius:var(--radius);
+    padding:40px 20px;
+    text-align:center;
+    transition:all .15s ease;
+    cursor:pointer;
+  }
+
+  .upload-area:hover{
+    border-color:var(--accent);
+    background:rgba(59, 130, 246, 0.05);
+  }
+
+  .upload-area.dragover{
+    border-color:var(--accent);
+    background:rgba(59, 130, 246, 0.1);
+  }
+
+  .feature-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+    gap:16px;
+    margin-top:20px;
+  }
+
+  .feature-card{
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+    text-align:center;
+  }
+
+  .feature-icon{
+    font-size:32px;
+    margin-bottom:8px;
+  }
+
+  .muted{ color:var(--muted); font-size:13px; }
+  .text-center{ text-align:center; }
+  .mb-2{ margin-bottom:8px; }
+  .mb-3{ margin-bottom:12px; }
+  .mt-2{ margin-top:8px; }
+  .mt-3{ margin-top:12px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- Header -->
+    <div class="card">
+      <h1>🤖 Enhanced AI ChatBot</h1>
+      <p class="muted">Multi-capability AI assistant with memory, PDF QA, task management, agent tools, and workflows</p>
+      
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <h3>Memory Chat</h3>
+          <p class="muted">Remembers conversations and builds context</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📄</div>
+          <h3>PDF QA</h3>
+          <p class="muted">Ask questions from uploaded PDFs</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📅</div>
+          <h3>Task Manager</h3>
+          <p class="muted">Natural language to structured tasks</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🛠️</div>
+          <h3>Agent Tools</h3>
+          <p class="muted">Search, calculate, summarize & more</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔄</div>
+          <h3>Smart Workflows</h3>
+          <p class="muted">Multi-step conditional processing</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Interface -->
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('chat')">💬 Chat</button>
+        <button class="tab" onclick="switchTab('pdf')">📄 PDF QA</button>
+        <button class="tab" onclick="switchTab('tasks')">📅 Tasks</button>
+        <button class="tab" onclick="switchTab('history')">🧠 History</button>
+      </div>
+
+      <!-- Chat Tab -->
+      <div id="chat-tab" class="tab-content active">
+        <div class="grid grid-2">
+          <div>
+            <label for="chat-input">Message</label>
+            <textarea id="chat-input" placeholder="Ask me anything! I can search the web, do calculations, manage tasks, answer questions about PDFs, and remember our conversation..."></textarea>
+            
+            <div class="btns">
+              <button class="btn-primary" onclick="sendMessage()">Send Message</button>
+              <button onclick="clearChat()">Clear Chat</button>
+              <span class="status ready" id="chat-status">Ready</span>
+            </div>
+
+            <div class="mt-3">
+              <h3>Quick Examples:</h3>
+              <div class="btns">
+                <button onclick="setMessage('Search for the latest AI developments in 2024')">🔍 Research</button>
+                <button onclick="setMessage('I need to buy groceries tomorrow - milk, bread, eggs')">📝 Task</button>
+                <button onclick="setMessage('Calculate compound interest: $5000 at 3.5% for 10 years')">🧮 Math</button>
+                <button onclick="setMessage('What is the weather like in New York today?')">🌤️ Weather</button>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <label>Response</label>
+            <div id="chat-output" class="output">Your AI assistant response will appear here...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF QA Tab -->
+      <div id="pdf-tab" class="tab-content">
+        <div class="grid">
+          <div>
+            <h3>Upload PDF</h3>
+            <div class="upload-area" onclick="document.getElementById('pdf-file').click()">
+              <div>📄 Click to upload PDF or drag & drop</div>
+              <div class="muted mt-2">Max file size: 10MB</div>
+            </div>
+            <input type="file" id="pdf-file" accept=".pdf" style="display:none" onchange="uploadPDF()">
+            
+            <div class="btns mt-3">
+              <button onclick="loadAvailablePDFs()">📋 Show Available PDFs</button>
+              <span class="status ready" id="pdf-status">Ready</span>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <label for="pdf-question">Ask a question about your PDF</label>
+            <textarea id="pdf-question" placeholder="What is the main topic of this document? Summarize the key findings..."></textarea>
+            
+            <div class="btns">
+              <button class="btn-primary" onclick="askPDFQuestion()">Ask Question</button>
+            </div>
+
+            <div class="mt-3">
+              <label>Answer</label>
+              <div id="pdf-output" class="output">Upload a PDF and ask questions about it...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks Tab -->
+      <div id="tasks-tab" class="tab-content">
+        <div class="grid grid-2">
+          <div>
+            <label for="task-input">Describe your task in natural language</label>
+            <textarea id="task-input" placeholder="I need to finish the quarterly report by Friday and send it to my manager..."></textarea>
+            
+            <div class="btns">
+              <button class="btn-primary" onclick="createTask()">Create Task</button>
+              <button onclick="loadTasks()">Load My Tasks</button>
+              <span class="status ready" id="task-status">Ready</span>
+            </div>
+
+            <div class="mt-3">
+              <h3>Quick Task Examples:</h3>
+              <div class="btns">
+                <button onclick="setTaskMessage('Buy groceries tomorrow - milk, bread, eggs')">🛒 Shopping</button>
+                <button onclick="setTaskMessage('Schedule dentist appointment next week')">📅 Appointment</button>
+                <button onclick="setTaskMessage('Finish project presentation by Friday')">💼 Work</button>
+                <button onclick="setTaskMessage('Exercise for 30 minutes daily')">🏃 Health</button>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <label>Tasks & Results</label>
+            <div id="task-output" class="output">Create tasks from natural language descriptions...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Tab -->
+      <div id="history-tab" class="tab-content">
+        <div class="grid">
+          <div>
+            <div class="btns mb-3">
+              <button onclick="loadConversationHistory()">🔄 Refresh History</button>
+              <button class="btn-danger" onclick="clearConversationHistory()">🗑️ Clear History</button>
+              <span class="status ready" id="history-status">Ready</span>
+            </div>
+            
+            <label>Conversation History</label>
+            <div id="history-output" class="chat-history">
+              <div class="text-center muted">Load your conversation history to see past interactions...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="card">
+      <div class="text-center muted">
+        <p>Enhanced AI ChatBot v2.0 • Powered by Ollama + LangChain + LangGraph + Redis</p>
+        <p>Features: Memory • PDF QA • Task Management • Agent Tools • Smart Workflows</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global state
+    let sessionId = localStorage.getItem('chatbot-session-id') || generateSessionId();
+    localStorage.setItem('chatbot-session-id', sessionId);
+
+    const backendBase = window.location.origin.startsWith("http") ? window.location.origin : "http://127.0.0.1:8000";
+
+    function generateSessionId() {
+      return 'session-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+    }
+
+    // Tab switching
+    function switchTab(tabName) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Remove active class from all tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show selected tab content
+      document.getElementById(tabName + '-tab').classList.add('active');
+      
+      // Add active class to selected tab
+      event.target.classList.add('active');
+    }
+
+    // Status management
+    function updateStatus(elementId, status, isError = false) {
+      const statusEl = document.getElementById(elementId);
+      statusEl.className = 'status';
+      
+      switch(status) {
+        case 'thinking':
+          statusEl.classList.add('thinking');
+          statusEl.textContent = 'Processing...';
+          break;
+        case 'ready':
+          statusEl.classList.add('ready');
+          statusEl.textContent = 'Ready';
+          break;
+        case 'error':
+          statusEl.classList.add('error');
+          statusEl.textContent = 'Error';
+          setTimeout(() => updateStatus(elementId, 'ready'), 3000);
+          break;
+        default:
+          statusEl.textContent = status;
+      }
+    }
+
+    // Chat functionality
+    function setMessage(message) {
+      document.getElementById('chat-input').value = message;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const output = document.getElementById('chat-output');
+      const message = input.value.trim();
+      
+      if (!message) {
+        output.textContent = "Please enter a message.";
+        updateStatus('chat-status', 'error');
+        return;
+      }
+      
+      updateStatus('chat-status', 'thinking');
+      output.textContent = "Processing your request...";
+      
+      try {
+        const response = await fetch(`${backendBase}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: message,
+            session_id: sessionId
+          })
+        });
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.detail || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        output.textContent = data.response;
+        updateStatus('chat-status', 'ready');
+        
+        // Clear input
+        input.value = '';
+        
+      } catch (error) {
+        output.textContent = `Error: ${error.message}`;
+        updateStatus('chat-status', 'error');
+      }
+    }
+
+    function clearChat() {
+      document.getElementById('chat-input').value = '';
+      document.getElementById('chat-output').textContent = 'Your AI assistant response will appear here...';
+      updateStatus('chat-status', 'ready');
+    }
+
+    // PDF functionality
+    async function uploadPDF() {
+      const fileInput = document.getElementById('pdf-file');
+      const file = fileInput.files[0];
+      
+      if (!file) return;
+      
+      updateStatus('pdf-status', 'thinking');
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      try {
+        const response = await fetch(`${backendBase}/upload-pdf`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.detail || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        document.getElementById('pdf-output').textContent = `✅ PDF uploaded successfully!\n\nFilename: ${data.filename}\nCollection: ${data.collection_name}\nSize: ${(data.size / 1024).toFixed(1)} KB\n\nYou can now ask questions about this PDF.`;
+        updateStatus('pdf-status', 'ready');
+        
+      } catch (error) {
+        document.getElementById('pdf-output').textContent = `Error uploading PDF: ${error.message}`;
+        updateStatus('pdf-status', 'error');
+      }
+    }
+
+    async function askPDFQuestion() {
+      const question = document.getElementById('pdf-question').value.trim();
+      const output = document.getElementById('pdf-output');
+      
+      if (!question) {
+        output.textContent = "Please enter a question.";
+        updateStatus('pdf-status', 'error');
+        return;
+      }
+      
+      updateStatus('pdf-status', 'thinking');
+      output.textContent = "Searching through your PDF...";
+      
+      try {
+        const response = await fetch(`${backendBase}/pdf-qa`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: question
+          })
+        });
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.detail || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        let result = `📄 **Answer:**\n${data.answer}\n\n`;
+        
+        if (data.sources && data.sources.length > 0) {
+          result += `**Sources:**\n`;
+          data.sources.forEach((source, index) => {
+            result += `${index + 1}. ${source.content.substring(0, 100)}...\n   (Similarity: ${source.similarity_score.toFixed(3)})\n\n`;
+          });
+        }
+        
+        output.textContent = result;
+        updateStatus('pdf-status', 'ready');
+        
+      } catch (error) {
+        output.textContent = `Error: ${error.message}`;
+        updateStatus('pdf-status', 'error');
+      }
+    }
+
+    async function loadAvailablePDFs() {
+      updateStatus('pdf-status', 'thinking');
+      
+      try {
+        const response = await fetch(`${backendBase}/pdfs`);
+        const data = await response.json();
+        
+        if (data.collections && data.collections.length > 0) {
+          let result = `📋 **Available PDFs (${data.count}):**\n\n`;
+          data.collections.forEach((collection, index) => {
+            result += `${index + 1}. ${collection}\n`;
+          });
+          document.getElementById('pdf-output').textContent = result;
+        } else {
+          document.getElementById('pdf-output').textContent = "No PDFs uploaded yet. Upload a PDF to get started.";
+        }
+        
+        updateStatus('pdf-status', 'ready');
+        
+      } catch (error) {
+        document.getElementById('pdf-output').textContent = `Error loading PDFs: ${error.message}`;
+        updateStatus('pdf-status', 'error');
+      }
+    }
+
+    // Task functionality
+    function setTaskMessage(message) {
+      document.getElementById('task-input').value = message;
+    }
+
+    async function createTask() {
+      const input = document.getElementById('task-input');
+      const output = document.getElementById('task-output');
+      const description = input.value.trim();
+      
+      if (!description) {
+        output.textContent = "Please describe your task.";
+        updateStatus('task-status', 'error');
+        return;
+      }
+      
+      updateStatus('task-status', 'thinking');
+      output.textContent = "Creating structured task...";
+      
+      try {
+        const response = await fetch(`${backendBase}/create-task`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            task_description: description,
+            session_id: sessionId
+          })
+        });
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.detail || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const task = data.task;
+        
+        let result = `✅ **Task Created Successfully!**\n\n`;
+        result += `**Title:** ${task.title}\n`;
+        result += `**Priority:** ${task.priority.toUpperCase()}\n`;
+        result += `**Category:** ${task.category.toUpperCase()}\n`;
+        result += `**Status:** ${task.status.toUpperCase()}\n`;
+        
+        if (task.due_date) {
+          result += `**Due Date:** ${task.due_date}\n`;
+        }
+        
+        if (task.estimated_duration) {
+          result += `**Estimated Duration:** ${task.estimated_duration} minutes\n`;
+        }
+        
+        if (task.subtasks && task.subtasks.length > 0) {
+          result += `\n**Subtasks:**\n`;
+          task.subtasks.forEach(subtask => {
+            result += `• ${subtask}\n`;
+          });
+        }
+        
+        if (task.tags && task.tags.length > 0) {
+          result += `\n**Tags:** ${task.tags.join(', ')}\n`;
+        }
+        
+        if (data.suggestions && data.suggestions.length > 0) {
+          result += `\n💡 **Suggestions:**\n`;
+          data.suggestions.forEach(suggestion => {
+            result += `• ${suggestion}\n`;
+          });
+        }
+        
+        output.textContent = result;
+        updateStatus('task-status', 'ready');
+        
+        // Clear input
+        input.value = '';
+        
+      } catch (error) {
+        output.textContent = `Error creating task: ${error.message}`;
+        updateStatus('task-status', 'error');
+      }
+    }
+
+    async function loadTasks() {
+      const output = document.getElementById('task-output');
+      
+      updateStatus('task-status', 'thinking');
+      output.textContent = "Loading your tasks...";
+      
+      try {
+        const response = await fetch(`${backendBase}/tasks/${sessionId}`);
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.detail || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const tasks = data.tasks;
+        const summary = data.summary;
+        
+        let result = `📋 **Your Tasks Summary**\n\n`;
+        result += `Total: ${summary.total_tasks} | `;
+        result += `Pending: ${summary.pending} | `;
+        result += `In Progress: ${summary.in_progress} | `;
+        result += `Completed: ${summary.completed}\n\n`;
+        
+        if (tasks && tasks.length > 0) {
+          result += `**Recent Tasks:**\n\n`;
+          
+          tasks.slice(0, 10).forEach((task, index) => {
+            const statusEmoji = {
+              'pending': '⏳',
+              'in_progress': '🔄', 
+              'completed': '✅',
+              'cancelled': '❌'
+            }[task.status] || '❓';
+            
+            const priorityEmoji = {
+              'high': '🔴',
+              'medium': '🟡',
+              'low': '🟢'
+            }[task.priority] || '⚪';
+            
+            result += `${index + 1}. ${statusEmoji} ${priorityEmoji} **${task.title}**\n`;
+            result += `   Category: ${task.category} | Priority: ${task.priority}\n`;
+            
+            if (task.due_date) {
+              result += `   Due: ${task.due_date}\n`;
+            }
+            
+            result += `   Created: ${new Date(task.created_at).toLocaleDateString()}\n\n`;
+          });
+        } else {
+          result += "No tasks found. Create your first task by describing what you need to do!";
+        }
+        
+        output.textContent = result;
+        updateStatus('task-status', 'ready');
+        
+      } catch (error) {
+        output.textContent = `Error loading tasks: ${error.message}`;
+        updateStatus('task-status', 'error');
+      }
+    }
+
+    // History functionality
+    async function loadConversationHistory() {
+      const output = document.getElementById('history-output');
+      
+      updateStatus('history-status', 'thinking');
+      output.innerHTML = '<div class="text-center muted">Loading conversation history...</div>';
+      
+      try {
+        const response = await fetch(`${backendBase}/conversation/${sessionId}`);
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.detail || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const messages = data.messages;
+        
+        if (messages && messages.length > 0) {
+          output.innerHTML = '';
+          
+          messages.forEach(message => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${message.type === 'HumanMessage' ? 'user' : 'assistant'}`;
+            
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'message-header';
+            headerDiv.textContent = message.type === 'HumanMessage' ? '👤 You' : '🤖 Assistant';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = message.content;
+            
+            messageDiv.appendChild(headerDiv);
+            messageDiv.appendChild(contentDiv);
+            output.appendChild(messageDiv);
+          });
+          
+          // Scroll to bottom
+          output.scrollTop = output.scrollHeight;
+        } else {
+          output.innerHTML = '<div class="text-center muted">No conversation history found. Start chatting to build your history!</div>';
+        }
+        
+        updateStatus('history-status', 'ready');
+        
+      } catch (error) {
+        output.innerHTML = `<div class="text-center muted">Error loading history: ${error.message}</div>`;
+        updateStatus('history-status', 'error');
+      }
+    }
+
+    async function clearConversationHistory() {
+      if (!confirm('Are you sure you want to clear your conversation history? This cannot be undone.')) {
+        return;
+      }
+      
+      updateStatus('history-status', 'thinking');
+      
+      try {
+        const response = await fetch(`${backendBase}/conversation/${sessionId}`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.detail || `HTTP ${response.status}`);
+        }
+        
+        document.getElementById('history-output').innerHTML = '<div class="text-center muted">Conversation history cleared successfully.</div>';
+        updateStatus('history-status', 'ready');
+        
+      } catch (error) {
+        document.getElementById('history-output').innerHTML = `<div class="text-center muted">Error clearing history: ${error.message}</div>`;
+        updateStatus('history-status', 'error');
+      }
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Ctrl/Cmd + Enter to send message in chat tab
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab.id === 'chat-tab') {
+          sendMessage();
+        } else if (activeTab.id === 'pdf-tab') {
+          askPDFQuestion();
+        } else if (activeTab.id === 'tasks-tab') {
+          createTask();
+        }
+      }
+    });
+
+    // Drag and drop for PDF upload
+    const uploadArea = document.querySelector('.upload-area');
+    
+    uploadArea.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].type === 'application/pdf') {
+        document.getElementById('pdf-file').files = files;
+        uploadPDF();
+      }
+    });
+
+    // Initialize
+    console.log('Enhanced AI ChatBot initialized with session:', sessionId);
+  </script>
+</body>
+</html>
